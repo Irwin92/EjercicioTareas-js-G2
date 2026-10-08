@@ -80,10 +80,10 @@ function renderizar() {
 
     const visibles = obtenerTareasVisibles();
 
-    for (const tarea of visibles){
+    for (const tarea of visibles) {
         //Crear <li>
         const item = document.createElement("li");
-        item.className= "tarea";
+        item.className = "tarea";
 
         //Agrega o quita la clase "completada"
         item.classList.toggle("completada", tarea.completada);
@@ -95,11 +95,11 @@ function renderizar() {
 
         //Contenedor de los botones
         const acciones = document.createElement("div");
-        item.className= "acciones";
+        acciones.className = "acciones";
 
         //Botón completar
         const completar = document.createElement("button");
-        completar.type="button";
+        completar.type = "button";
 
         //dataset agrega informacion personalizada al boton
         completar.dataset.accion = "alternar";
@@ -118,7 +118,7 @@ function renderizar() {
         eliminar.className = "eliminar";
         eliminar.dataset.accion = "eliminar";
         eliminar.dataset.id = String(tarea.id);
-        eliminar.textContent= "Eliminar";
+        eliminar.textContent = "Eliminar";
 
         eliminar.setAttribute(
             "aria-label",
@@ -126,18 +126,89 @@ function renderizar() {
         );
         //Insertar elementos
         acciones.append(completar, eliminar);
-        lista.append(titulo, acciones);
+        item.append(titulo, acciones);
         lista.append(item);
-
-        //Contar pendientes
-        
-
     }//Fin del for
 
+    //Contar pendientes
+    const pendientes = tareas.filter(
+        (tarea) => !tarea.completada
+    ).length;
+
+    contador.textContent =
+        `${pendientes} pendientes de ${tareas.length}`;
+    //Mostrar mensaje de la lista vacia cuando corresponda
+    vacio.hidden = visibles.length > 0;
 }
 
 //------------------------------------------------------------------------------------------------
+/**
+ * completar, reabrir o eliminar
+ * Se utiliza delegacion de eventos: un solo listener controla los botones de todas las tareas
+ */
+lista.addEventListener("click", (evento) => {
+    //Busca el boton presionadp
+    const boton = evento.target.closest("button[data-accion]");
+
+    if (!boton) {
+        return;
+    }
+    //dataset.id llega como texto, lo convertimos a numero
+    const id = Number(boton.dataset.id);
+    //findIndex() busca la posicion de la tarea en el arreglo
+    const indice = tareas.findIndex(
+        (tarea) => tarea.id === id
+    );
+    if (indice === -1) {
+        return;
+    }
+    //Completar o reabrir
+    if (boton.dataset.accion === "alternar") {
+        tareas[indice].completada = !tareas[indice].completada;
+    }
+    //Eliminar 
+    else if (boton.dataset.accion === "eliminar") {
+        tareas.splice(indice, 1);
+    }
+    renderizar();
+});
+
+//------------------------------------------------------------------------------------------------
+/**
+ * Filtrar Tareas
+ * 
+ */
+filtros.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("button[data-filtro]");
+
+    if (!boton) {
+        return;
+    }
+
+    //Se guarda el filtro elegido
+    filtroActual = boton.dataset.filtro;
+
+    //Se obtiene todos los botones de filtro
+    const botonesFiltro = filtros.querySelectorAll("button");
+
+    //Se marca visualmente(de verde) el filtro activo
+    for (const opcion of botonesFiltro) {
+        const activo = opcion === boton;
+        opcion.classList.toggle(
+            "activo",
+            activo
+        );
+        opcion.setAttribute(
+            "aria-pressed",
+            String(activo)
+        );
+    }
+    renderizar();
+});
+
+//------------------------------------------------------------------------------------------------
 
 
 
 //------------------------------------------------------------------------------------------------
+renderizar();
